@@ -5,6 +5,7 @@ public class Bootstrap : MonoBehaviour
 {
     [SerializeField] private PlayerBody _player;
     [SerializeField] private Controls _controls;
+    [SerializeField] private PlayerIO _playerIO;
 
     private PlayerController _playerController;
 
@@ -14,6 +15,7 @@ public class Bootstrap : MonoBehaviour
         _playerController.IsAvailable = true;
 
         _controls.Initialize();
+        _playerIO.Initialize();
     }
 
     private void Update()
