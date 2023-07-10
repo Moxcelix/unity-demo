@@ -3,7 +3,7 @@ using Core.Player;
 using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
-public class Piano : MonoBehaviour, IInteractable
+public class Piano : MonoBehaviour, INPCInteractable
 {
     [SerializeField] private string _text;
     [SerializeField] private float _range;

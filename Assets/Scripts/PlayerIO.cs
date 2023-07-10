@@ -23,7 +23,7 @@ public class PlayerIO : MonoBehaviour, IInteractor
 
     private void Update()
     {
-        var hit = _raycaster.CheckHit<IInteractable>();
+        var hit = _raycaster.CheckHit<INPCInteractable>();
 
         if (hit == null || !hit.IsAvailable)
         {

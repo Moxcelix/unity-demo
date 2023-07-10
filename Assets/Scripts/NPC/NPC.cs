@@ -7,22 +7,24 @@ using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Animator))]
-public class NPC : MonoBehaviour, IInteractable, ISitable
+public class NPC : MonoBehaviour, INPCInteractable, ISitable
 {
     private const float c_translateTolerance = 0.05f;
 
     [SerializeField] private string _hint;
     [SerializeField] private float _rotatinonSpeed;
     [SerializeField] private float _translateSpeed;
-    [SerializeField] private Transform _lookAtTarget;
+    [SerializeField] private Transform _playerTransform;
 
     [Header("NPC States")]
     [SerializeField] private Idling _idling;
     [SerializeField] private Greeting _greeting;
     [SerializeField] private Walking _walking;
     [SerializeField] private PlayingPiano _playingPiano;
+    [SerializeField] private Looking _looking;
 
     private NavMeshAgent _navMeshAgent;
+    private Transform _lookAtTarget;
     private Animator _animator;
     private NPCState _state;
 
@@ -43,13 +45,14 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         _greeting.Initialize(this);
         _walking.Initialize(this);
         _playingPiano.Initialize(this);
+        _looking.Initialize(this);
 
         _idling.Start();
     }
 
     private void Update()
     {
-        IsAvailable = _state.IsCompleted;
+        IsAvailable = _state.IsCompleted && !IsSitting;
 
         if (_state != _idling && _state.IsCompleted)
         {
@@ -65,29 +68,41 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
             else
             {
                 _playingPiano.Piano.SeatPlace.Take(this);
-
-                LookAt(_playingPiano.Piano.transform.position);
             }
         }
 
-        if (_state.LookAtPlayer)
+        if (_lookAtTarget != null)
         {
-            LookAt(_lookAtTarget.position);
+            LookAt(_lookAtTarget.position, Time.deltaTime);
         }
+    }
+
+    public void SetLookTarget(Transform target)
+    {
+        _looking.LookTarget = target;
+
+        SetState(_looking);
     }
 
     public void PlayPiano(Piano piano)
     {
-        SetState(_playingPiano);
-
         _playingPiano.Piano = piano;
+
+        SetState(_playingPiano);
 
         piano.Play();
     }
 
-    public void InteractWith(IInteractable interactable)
+    public void StayStill()
     {
-        if(!IsAvailable)
+        _navMeshAgent.ResetPath();
+
+        SetState(_idling);
+    }
+
+    public void InteractWith(INPCInteractable interactable)
+    {
+        if (!IsAvailable)
         {
             return;
         }
@@ -95,7 +110,10 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         StartCoroutine(GoToAndDo(
             interactable.Target.position,
             interactable.Range, () =>
-            interactable.Interact(this)));
+            {
+                StayStill();
+                interactable.Interact(this);
+            }));
     }
 
     public void Interact(NPC interactor)
@@ -125,7 +143,8 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
     public void StandUp(Transform leavePoint)
     {
         StartCoroutine(TranslateAndDo(leavePoint.position,
-            c_translateTolerance, () => {
+            c_translateTolerance, () =>
+            {
                 IsSitting = false;
                 _navMeshAgent.enabled = true;
             }));
@@ -138,9 +157,31 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         _state = state;
 
         _state.Start();
+
+        HandleStateTransition(_state);
     }
 
-    private IEnumerator TranslateAndDo(Vector3 position, 
+    private void HandleStateTransition(NPCState state)
+    {
+        if (state.LookAtPlayer)
+        {
+            _lookAtTarget = _playerTransform;
+        }
+        else if (state == _looking)
+        {
+            _lookAtTarget = _looking.LookTarget;
+        }
+        else if (state == _playingPiano)
+        {
+            _lookAtTarget = _playingPiano.Piano.transform;
+        }
+        else
+        {
+            _lookAtTarget = null;
+        }
+    }
+
+    private IEnumerator TranslateAndDo(Vector3 position,
         float tolerance, Action onEndOfTranslation = null)
     {
         var distance = Vector3.Distance(position, transform.position);
@@ -154,7 +195,6 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
 
             yield return new WaitForEndOfFrame();
         }
-        Debug.Log("Сел");
 
         transform.position = position;
 
@@ -183,7 +223,7 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         onEndOfPath?.Invoke();
     }
 
-    private void LookAt(Vector3 position)
+    private void LookAt(Vector3 position, float deltaTime)
     {
         var target = new Vector3(position.x,
                 transform.position.y, position.z);
@@ -193,6 +233,6 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
 
         transform.rotation = Quaternion.Slerp(
             transform.rotation, targetRotation,
-            _rotatinonSpeed * Time.deltaTime);
+            _rotatinonSpeed * deltaTime);
     }
 }
