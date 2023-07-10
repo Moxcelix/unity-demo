@@ -1,9 +1,12 @@
+using UnityEngine;
+
 namespace Core.Interactive
 {
     public interface IInteractable
     {
-        public string HintText { get; }
+        public GameObject GameObject { get; }
+        public string HintText { get; } 
         public bool IsAvailable { get; }   
-        public void Interact();
+        public void Interact(IInteractor interactor);
     }
 }

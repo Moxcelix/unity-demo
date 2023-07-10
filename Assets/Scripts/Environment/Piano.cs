@@ -7,9 +7,10 @@ public class Piano : MonoBehaviour, IInteractable
 
     public string HintText => _text;
     public bool IsAvailable => true;
+    public GameObject GameObject => gameObject;
 
-    public void Interact()
+    public void Interact(IInteractor interactor)
     {
-        Debug.Log("Interacted");
+        Debug.Log($"Interacted by {interactor}.");
     }
 }
