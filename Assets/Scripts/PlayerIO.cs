@@ -13,6 +13,7 @@ public class PlayerIO : MonoBehaviour, IInteractor
     [SerializeField] private TextMeshProUGUI _hintTextRenderer;
 
     public GameObject GameObject => gameObject;
+    public NPC CurrentNPC => _npc;
 
     public void Initialize(Raycaster raycaster, NPC npc)
     {
@@ -38,8 +39,6 @@ public class PlayerIO : MonoBehaviour, IInteractor
         if (Input.GetKeyDown(KeyCode.E))
         {
             _npc.InteractWith(hit);
-
-            hit.Interact(this);
         }
     }
 }

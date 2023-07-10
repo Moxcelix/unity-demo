@@ -4,9 +4,10 @@ namespace Core.Interactive
 {
     public interface IInteractable
     {
-        public GameObject GameObject { get; }
+        public Transform Target { get; }
+        public float Range { get; }
         public string HintText { get; } 
         public bool IsAvailable { get; }   
-        public void Interact(IInteractor interactor);
+        public void Interact(NPC interactor);
     }
 }
