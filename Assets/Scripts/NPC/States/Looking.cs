@@ -14,6 +14,7 @@ public class Looking : NPCState
         IsCompleted = false;
         LookAtPlayer = false;
 
+        _npc.StayStill();
         _npc.FollowTarget(LookTarget);
         _npc.PlayAnimation(c_animationName);
         _npc.StartCoroutine(TimeOut());

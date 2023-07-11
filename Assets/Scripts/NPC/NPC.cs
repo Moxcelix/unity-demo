@@ -16,6 +16,8 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
     [SerializeField] private string _hint;
     [SerializeField] private float _rotatinonSpeed;
     [SerializeField] private float _translateSpeed;
+    [SerializeField] private float _minFollowDistance;
+    [SerializeField] private float _maxFollowDistance;
 
     [Header("NPC Sound")]
     [SerializeField] private NPCReplica[] _replicas;
@@ -61,41 +63,8 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
     {
         IsAvailable = _state.IsCompleted && !IsSitting;
 
-        if (_state == _idlingState)
-        {
-            if (_playerTransform != null &&
-                Vector3.Distance(transform.position,
-                _playerTransform.position) > 5.0f)
-            {
-                Follow(_playerTransform, 2.0f);
-            }
-        }
-        else if (_state.IsCompleted)
-        {
-            SetState(_idlingState);
-        }
-
-        if (_state == _playingPianoState)
-        {
-            if (_playingPianoState.Piano.IsAvailable)
-            {
-                _playingPianoState.Piano.SeatPlace.Free();
-            }
-            else
-            {
-                _playingPianoState.Piano.SeatPlace.Take(this);
-            }
-        }
-
-        if (_state.LookAtPlayer)
-        {
-            _lookAtTarget = _playerTransform;
-        }
-
-        if (_lookAtTarget != null)
-        {
-            LookAt(_lookAtTarget.position, Time.deltaTime);
-        }
+        HandleStateTransition();
+        HandleLooking();
     }
 
     public void CommentInteraction(string key)
@@ -147,9 +116,8 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
             return;
         }
 
-        StartCoroutine(GoToAndDo(
-            interactable.Target.position,
-            interactable.Range, action));
+        GoToAndDo(interactable.Target,
+            interactable.Range, action);
     }
 
     public void InteractWith<T>(T interactable,
@@ -217,6 +185,53 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         _navMeshAgent.ResetPath();
     }
 
+    public void GoTo(Vector3 destination)
+    {
+        _navMeshAgent.SetDestination(destination);
+    }
+
+    private void HandleLooking()
+    {
+        if (_state.LookAtPlayer)
+        {
+            _lookAtTarget = _playerTransform;
+        }
+
+        if (_lookAtTarget != null)
+        {
+            LookAt(_lookAtTarget.position, Time.deltaTime);
+        }
+    }
+
+    private void HandleStateTransition()
+    {
+        if (_state == _idlingState)
+        {
+            if (_playerTransform != null &&
+                Vector3.Distance(transform.position,
+                _playerTransform.position) > _maxFollowDistance)
+            {
+                GoToAndDo(_playerTransform, _minFollowDistance);
+            }
+        }
+        else if (_state.IsCompleted)
+        {
+            SetState(_idlingState);
+        }
+
+        if (_state == _playingPianoState)
+        {
+            if (_playingPianoState.Piano.IsAvailable)
+            {
+                _playingPianoState.Piano.SeatPlace.Free();
+            }
+            else
+            {
+                _playingPianoState.Piano.SeatPlace.Take(this);
+            }
+        }
+    }
+
     private void SetState(NPCState state)
     {
         _state = state;
@@ -246,28 +261,25 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         onEndOfTranslation?.Invoke();
     }
 
-    private IEnumerator GoToAndDo(Vector3 position,
+    private void GoToAndDo(Transform position,
         float tolerance, Action onEndOfPath = null)
     {
-        _navMeshAgent.SetDestination(position);
-
-        var distance = Vector3.Distance(position, transform.position);
-
-        if (distance > tolerance)
+        IEnumerator goToAndDo()
         {
+            _walkingState.Target = position;
+            _walkingState.Tolerance = tolerance;
+
             SetState(_walkingState);
+
+            while (!_walkingState.IsCompleted)
+            {
+                yield return new WaitForEndOfFrame();
+            }
+
+            onEndOfPath?.Invoke();
         }
 
-        while (distance > tolerance)
-        {
-            distance = Vector3.Distance(position, transform.position);
-
-            yield return new WaitForEndOfFrame();
-        }
-
-        _navMeshAgent.ResetPath();
-
-        onEndOfPath?.Invoke();
+        StartCoroutine(goToAndDo());
     }
 
     private void LookAt(Vector3 position, float deltaTime)
@@ -281,30 +293,5 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         transform.rotation = Quaternion.Slerp(
             transform.rotation, targetRotation,
             _rotatinonSpeed * deltaTime);
-    }
-
-    private void Follow(Transform target, float distance)
-    {
-        bool predicate()
-        {
-            return Vector3.Distance(transform.position,
-            target.position) > distance;
-        }
-
-        IEnumerator follow()
-        {
-            SetState(_walkingState);
-
-            while (predicate())
-            {
-                _navMeshAgent.SetDestination(target.position);
-
-                yield return new WaitForEndOfFrame();
-            }
-
-            SetState(_idlingState);
-        }
-
-        StartCoroutine(follow()); 
     }
 }
