@@ -3238,19 +3238,8 @@ MonoBehaviour:
   _hint: "\u0412\u0437\u0430\u0438\u043C\u043E\u0434\u0435\u0439\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C"
   _rotatinonSpeed: 8
   _translateSpeed: 12
-  _replicas:
-  - _name: hi
-    _audioClips:
-    - {fileID: 8300000, guid: 69eca45f19e890e4292f7f58190db92d, type: 3}
-    - {fileID: 8300000, guid: 09924c776114bf64fb3e8986c43566d1, type: 3}
-  - _name: piano
-    _audioClips:
-    - {fileID: 8300000, guid: 3e3491b58aa88e44198149180c37c8dc, type: 3}
-    - {fileID: 8300000, guid: afff5713c57e74a4e91fea058768cdfc, type: 3}
-  - _name: painting
-    _audioClips:
-    - {fileID: 8300000, guid: 294e1e676a0adfe428890fbe00c41266, type: 3}
-    - {fileID: 8300000, guid: 2bcf1e38ea667b84dbbc0b79a82e397c, type: 3}
+  _minFollowDistance: 2
+  _maxFollowDistance: 5
 --- !u!195 &1518815135
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -3383,6 +3372,31 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1518815140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1518815129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aca07660403dd3f4dbc8ac4f72778d74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _replicas:
+  - _name: hi
+    _audioClips:
+    - {fileID: 8300000, guid: 69eca45f19e890e4292f7f58190db92d, type: 3}
+    - {fileID: 8300000, guid: 09924c776114bf64fb3e8986c43566d1, type: 3}
+  - _name: piano
+    _audioClips:
+    - {fileID: 8300000, guid: 3e3491b58aa88e44198149180c37c8dc, type: 3}
+    - {fileID: 8300000, guid: afff5713c57e74a4e91fea058768cdfc, type: 3}
+  - _name: painting
+    _audioClips:
+    - {fileID: 8300000, guid: 2bcf1e38ea667b84dbbc0b79a82e397c, type: 3}
+    - {fileID: 8300000, guid: 294e1e676a0adfe428890fbe00c41266, type: 3}
 --- !u!1 &1546263453
 GameObject:
   m_ObjectHideFlags: 0

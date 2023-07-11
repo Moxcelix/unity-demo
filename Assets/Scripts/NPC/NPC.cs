@@ -1,13 +1,12 @@
 using Core.Interactive;
 using Core.Player;
 using System;
-using System.Linq;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-[RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(NPCSound))]
 [RequireComponent(typeof(Animator))]
 public class NPC : MonoBehaviour, IInteractable, ISitable
 {
@@ -19,9 +18,6 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
     [SerializeField] private float _minFollowDistance;
     [SerializeField] private float _maxFollowDistance;
 
-    [Header("NPC Sound")]
-    [SerializeField] private NPCReplica[] _replicas;
-
     [Header("NPC States")]
     [SerializeField] private Idling _idlingState;
     [SerializeField] private Greeting _greetingState;
@@ -29,12 +25,12 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
     [SerializeField] private PlayingPiano _playingPianoState;
     [SerializeField] private Looking _lookingState;
 
+    private NavMeshAgent _navMeshAgent;
     private Transform _playerTransform;
     private Transform _lookAtTarget;
-    private NavMeshAgent _navMeshAgent;
-    private AudioSource _audioSource;
     private Animator _animator;
     private NPCState _state;
+    private NPCSound _sound;
 
     public Transform Target => transform;
     public string HintText => _hint;
@@ -45,8 +41,8 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
     private void Awake()
     {
         _navMeshAgent = GetComponent<NavMeshAgent>();
-        _audioSource = GetComponent<AudioSource>();
         _animator = GetComponent<Animator>();
+        _sound = GetComponent<NPCSound>();
 
         _state = _idlingState;
 
@@ -56,6 +52,7 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         _playingPianoState.Initialize(this);
         _lookingState.Initialize(this);
 
+        _sound.Initialize();
         _idlingState.Start();
     }
 
@@ -74,22 +71,7 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
             return;
         }
 
-        Say(key);
-    }
-
-    public void Say(string key)
-    {
-        var replica = from r in _replicas
-                      where r.Name == key
-                      select r;
-
-        if (replica is null)
-        {
-            return;
-        }
-
-        _audioSource.PlayOneShot(
-            replica.First().GetRandomAudioClip());
+        _sound.Say(key);
     }
 
     public void SetLookTarget(Transform target)
@@ -132,7 +114,7 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         _navMeshAgent.ResetPath();
         _playerTransform = interactor.GameObject.transform;
 
-        Say("hi");
+        _sound.Say("hi");
         SetState(_greetingState);
     }
 
