@@ -10,6 +10,7 @@ public class Idling : NPCState
         IsCompleted = true;
         LookAtPlayer = false;
 
+        _npc.StayStill();
         _npc.PlayAnimation(c_animationName);
     }
 }

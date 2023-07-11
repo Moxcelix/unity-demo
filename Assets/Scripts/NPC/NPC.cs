@@ -1,30 +1,36 @@
 using Core.Interactive;
 using Core.Player;
 using System;
+using System.Linq;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
+[RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(Animator))]
-public class NPC : MonoBehaviour, INPCInteractable, ISitable
+public class NPC : MonoBehaviour, IInteractable, ISitable
 {
     private const float c_translateTolerance = 0.05f;
 
     [SerializeField] private string _hint;
     [SerializeField] private float _rotatinonSpeed;
     [SerializeField] private float _translateSpeed;
-    [SerializeField] private Transform _playerTransform;
+
+    [Header("NPC Sound")]
+    [SerializeField] private NPCReplica[] _replicas;
 
     [Header("NPC States")]
-    [SerializeField] private Idling _idling;
-    [SerializeField] private Greeting _greeting;
-    [SerializeField] private Walking _walking;
-    [SerializeField] private PlayingPiano _playingPiano;
-    [SerializeField] private Looking _looking;
+    [SerializeField] private Idling _idlingState;
+    [SerializeField] private Greeting _greetingState;
+    [SerializeField] private Walking _walkingState;
+    [SerializeField] private PlayingPiano _playingPianoState;
+    [SerializeField] private Looking _lookingState;
 
-    private NavMeshAgent _navMeshAgent;
+    private Transform _playerTransform;
     private Transform _lookAtTarget;
+    private NavMeshAgent _navMeshAgent;
+    private AudioSource _audioSource;
     private Animator _animator;
     private NPCState _state;
 
@@ -37,38 +43,53 @@ public class NPC : MonoBehaviour, INPCInteractable, ISitable
     private void Awake()
     {
         _navMeshAgent = GetComponent<NavMeshAgent>();
+        _audioSource = GetComponent<AudioSource>();
         _animator = GetComponent<Animator>();
 
-        _state = _idling;
+        _state = _idlingState;
 
-        _idling.Initialize(this);
-        _greeting.Initialize(this);
-        _walking.Initialize(this);
-        _playingPiano.Initialize(this);
-        _looking.Initialize(this);
+        _idlingState.Initialize(this);
+        _greetingState.Initialize(this);
+        _walkingState.Initialize(this);
+        _playingPianoState.Initialize(this);
+        _lookingState.Initialize(this);
 
-        _idling.Start();
+        _idlingState.Start();
     }
 
     private void Update()
     {
         IsAvailable = _state.IsCompleted && !IsSitting;
 
-        if (_state != _idling && _state.IsCompleted)
+        if (_state == _idlingState)
         {
-            SetState(_idling);
+            if (_playerTransform != null &&
+                Vector3.Distance(transform.position,
+                _playerTransform.position) > 5.0f)
+            {
+                Follow(_playerTransform, 2.0f);
+            }
+        }
+        else if (_state.IsCompleted)
+        {
+            SetState(_idlingState);
         }
 
-        if (_state == _playingPiano)
+        if (_state == _playingPianoState)
         {
-            if (_playingPiano.Piano.IsAvailable)
+            if (_playingPianoState.Piano.IsAvailable)
             {
-                _playingPiano.Piano.SeatPlace.Free();
+                _playingPianoState.Piano.SeatPlace.Free();
             }
             else
             {
-                _playingPiano.Piano.SeatPlace.Take(this);
+                _playingPianoState.Piano.SeatPlace.Take(this);
             }
+        }
+
+        if (_state.LookAtPlayer)
+        {
+            _lookAtTarget = _playerTransform;
         }
 
         if (_lookAtTarget != null)
@@ -77,30 +98,49 @@ public class NPC : MonoBehaviour, INPCInteractable, ISitable
         }
     }
 
+    public void CommentInteraction(string key)
+    {
+        if (!IsAvailable)
+        {
+            return;
+        }
+
+        Say(key);
+    }
+
+    public void Say(string key)
+    {
+        var replica = from r in _replicas
+                      where r.Name == key
+                      select r;
+
+        if (replica is null)
+        {
+            return;
+        }
+
+        _audioSource.PlayOneShot(
+            replica.First().GetRandomAudioClip());
+    }
+
     public void SetLookTarget(Transform target)
     {
-        _looking.LookTarget = target;
+        _lookingState.LookTarget = target;
 
-        SetState(_looking);
+        SetState(_lookingState);
     }
 
     public void PlayPiano(Piano piano)
     {
-        _playingPiano.Piano = piano;
+        _playingPianoState.Piano = piano;
 
-        SetState(_playingPiano);
+        SetState(_playingPianoState);
 
         piano.Play();
     }
 
-    public void StayStill()
-    {
-        _navMeshAgent.ResetPath();
-
-        SetState(_idling);
-    }
-
-    public void InteractWith(INPCInteractable interactable)
+    public void InteractWith<T>(T interactable,
+        Action action = null) where T : IInteractable
     {
         if (!IsAvailable)
         {
@@ -109,18 +149,23 @@ public class NPC : MonoBehaviour, INPCInteractable, ISitable
 
         StartCoroutine(GoToAndDo(
             interactable.Target.position,
-            interactable.Range, () =>
-            {
-                StayStill();
-                interactable.Interact(this);
-            }));
+            interactable.Range, action));
     }
 
-    public void Interact(NPC interactor)
+    public void InteractWith<T>(T interactable,
+        Action<T> action = null) where T : IInteractable
+    {
+        InteractWith(interactable,
+            () => action(interactable));
+    }
+
+    public void Interact(IInteractor interactor)
     {
         _navMeshAgent.ResetPath();
+        _playerTransform = interactor.GameObject.transform;
 
-        SetState(_greeting);
+        Say("hi");
+        SetState(_greetingState);
     }
 
     public void PlayAnimation(string arg)
@@ -149,36 +194,36 @@ public class NPC : MonoBehaviour, INPCInteractable, ISitable
                 _navMeshAgent.enabled = true;
             }));
 
-        SetState(_idling);
+        SetState(_idlingState);
+    }
+
+    public void FollowTarget(Transform transform)
+    {
+        if (transform == null)
+        {
+            throw new NullReferenceException();
+        }
+
+        _lookAtTarget = transform;
+    }
+
+    public void ClearFollowTarget()
+    {
+        _lookAtTarget = null;
+    }
+
+    public void StayStill()
+    {
+        _navMeshAgent.ResetPath();
     }
 
     private void SetState(NPCState state)
     {
         _state = state;
 
+        ClearFollowTarget();
+
         _state.Start();
-
-        HandleStateTransition(_state);
-    }
-
-    private void HandleStateTransition(NPCState state)
-    {
-        if (state.LookAtPlayer)
-        {
-            _lookAtTarget = _playerTransform;
-        }
-        else if (state == _looking)
-        {
-            _lookAtTarget = _looking.LookTarget;
-        }
-        else if (state == _playingPiano)
-        {
-            _lookAtTarget = _playingPiano.Piano.transform;
-        }
-        else
-        {
-            _lookAtTarget = null;
-        }
     }
 
     private IEnumerator TranslateAndDo(Vector3 position,
@@ -210,7 +255,7 @@ public class NPC : MonoBehaviour, INPCInteractable, ISitable
 
         if (distance > tolerance)
         {
-            SetState(_walking);
+            SetState(_walkingState);
         }
 
         while (distance > tolerance)
@@ -219,6 +264,8 @@ public class NPC : MonoBehaviour, INPCInteractable, ISitable
 
             yield return new WaitForEndOfFrame();
         }
+
+        _navMeshAgent.ResetPath();
 
         onEndOfPath?.Invoke();
     }
@@ -234,5 +281,30 @@ public class NPC : MonoBehaviour, INPCInteractable, ISitable
         transform.rotation = Quaternion.Slerp(
             transform.rotation, targetRotation,
             _rotatinonSpeed * deltaTime);
+    }
+
+    private void Follow(Transform target, float distance)
+    {
+        bool predicate()
+        {
+            return Vector3.Distance(transform.position,
+            target.position) > distance;
+        }
+
+        IEnumerator follow()
+        {
+            SetState(_walkingState);
+
+            while (predicate())
+            {
+                _navMeshAgent.SetDestination(target.position);
+
+                yield return new WaitForEndOfFrame();
+            }
+
+            SetState(_idlingState);
+        }
+
+        StartCoroutine(follow()); 
     }
 }

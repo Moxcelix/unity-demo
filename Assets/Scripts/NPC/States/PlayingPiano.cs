@@ -10,6 +10,7 @@ public class PlayingPiano : NPCState
         IsCompleted = false;
         LookAtPlayer = false;
 
+        _npc.FollowTarget(Piano.transform);
         _npc.PlayAnimation(c_animationName);
     }
 }

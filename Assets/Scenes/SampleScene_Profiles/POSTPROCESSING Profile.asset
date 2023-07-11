@@ -43,7 +43,7 @@ MonoBehaviour:
     value: 1
   intensity:
     overrideState: 1
-    value: 0.71
+    value: 0.43
   color:
     overrideState: 0
     value: {r: 0, g: 0, b: 0, a: 1}
@@ -164,11 +164,11 @@ MonoBehaviour:
     overrideState: 0
     value: 0
   dirtTexture:
-    overrideState: 1
+    overrideState: 0
     value: {fileID: 2800000, guid: 1378a33cdd085d64c9da863d2484ff21, type: 3}
     defaultState: 1
   dirtIntensity:
-    overrideState: 1
+    overrideState: 0
     value: 1.56
 --- !u!114 &4616673005193987543
 MonoBehaviour:

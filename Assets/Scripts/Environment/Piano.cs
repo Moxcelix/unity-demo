@@ -3,7 +3,7 @@ using Core.Player;
 using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
-public class Piano : MonoBehaviour, INPCInteractable
+public class Piano : MonoBehaviour, IInteractable
 {
     [SerializeField] private string _text;
     [SerializeField] private float _range;
@@ -32,11 +32,14 @@ public class Piano : MonoBehaviour, INPCInteractable
         IsAvailable = !_source.isPlaying;
     }
 
-    public void Interact(NPC interactor)
+    public void Interact(IInteractor interactor)
     {
         Debug.Log($"Interacted by {interactor}.");
 
-        interactor.PlayPiano(this);
+        interactor.CurrentNPC.CommentInteraction("piano");
+
+        interactor.CurrentNPC.InteractWith(this,
+            interactor.CurrentNPC.PlayPiano);
     }
 
     public void Play()

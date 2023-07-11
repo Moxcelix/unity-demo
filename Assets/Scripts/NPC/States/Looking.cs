@@ -4,8 +4,8 @@ using UnityEngine;
 [System.Serializable]
 public class Looking : NPCState
 {
-    private const string c_animationName = "idling";
-    private const float c_timeOutTime = 2.0f;
+    private const string c_animationName = "looking";
+    private const float c_timeOutTime = 6.0f;
 
     public Transform LookTarget { get; set; } = null!;
 
@@ -14,6 +14,7 @@ public class Looking : NPCState
         IsCompleted = false;
         LookAtPlayer = false;
 
+        _npc.FollowTarget(LookTarget);
         _npc.PlayAnimation(c_animationName);
         _npc.StartCoroutine(TimeOut());
     }

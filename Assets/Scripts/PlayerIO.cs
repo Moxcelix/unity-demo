@@ -23,7 +23,7 @@ public class PlayerIO : MonoBehaviour, IInteractor
 
     private void Update()
     {
-        var hit = _raycaster.CheckHit<INPCInteractable>();
+        var hit = _raycaster.CheckHit<IInteractable>();
 
         if (hit == null || !hit.IsAvailable)
         {
@@ -38,7 +38,7 @@ public class PlayerIO : MonoBehaviour, IInteractor
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            _npc.InteractWith(hit);
+            hit.Interact(this);
         }
     }
 }

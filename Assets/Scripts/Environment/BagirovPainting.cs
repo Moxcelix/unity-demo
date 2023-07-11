@@ -2,7 +2,7 @@ using Core.Interactive;
 using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
-public class BagirovPainting : MonoBehaviour, INPCInteractable
+public class BagirovPainting : MonoBehaviour, IInteractable
 {
     [SerializeField] private string _hint;
     [SerializeField] private float _range;
@@ -22,10 +22,16 @@ public class BagirovPainting : MonoBehaviour, INPCInteractable
         _audioSource = GetComponent<AudioSource>();
     }
 
-    public void Interact(NPC interactor)
+    public void Interact(IInteractor interactor)
     {
-        interactor.SetLookTarget(transform);
+        Debug.Log($"Interacted by {interactor}.");
 
-        _audioSource.PlayOneShot(_rusy);
+        interactor.CurrentNPC.CommentInteraction("painting");
+
+        interactor.CurrentNPC.InteractWith(this, () =>
+            {
+                interactor.CurrentNPC.SetLookTarget(transform);
+                _audioSource.PlayOneShot(_rusy);
+            });
     }
 }
