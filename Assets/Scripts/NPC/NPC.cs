@@ -113,8 +113,8 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
     {
         _navMeshAgent.ResetPath();
         _playerTransform = interactor.GameObject.transform;
-
         _sound.Say("hi");
+
         SetState(_greetingState);
     }
 
@@ -131,18 +131,17 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
 
         IsSitting = true;
 
-        StartCoroutine(TranslateAndDo(
-            placePoint.position, c_translateTolerance));
+        TranslateAndDo(placePoint.position, c_translateTolerance);
     }
 
     public void StandUp(Transform leavePoint)
     {
-        StartCoroutine(TranslateAndDo(leavePoint.position,
+        TranslateAndDo(leavePoint.position,
             c_translateTolerance, () =>
             {
                 IsSitting = false;
                 _navMeshAgent.enabled = true;
-            }));
+            });
 
         SetState(_idlingState);
     }
@@ -193,6 +192,8 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
                 Vector3.Distance(transform.position,
                 _playerTransform.position) > _maxFollowDistance)
             {
+                _sound.Say("wait");
+
                 GoToAndDo(_playerTransform, _minFollowDistance);
             }
         }
@@ -223,24 +224,29 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
         _state.Start();
     }
 
-    private IEnumerator TranslateAndDo(Vector3 position,
+    private void TranslateAndDo(Vector3 position,
         float tolerance, Action onEndOfTranslation = null)
     {
-        var distance = Vector3.Distance(position, transform.position);
-
-        while (distance > tolerance)
+        IEnumerator translateAndDo()
         {
-            distance = Vector3.Distance(position, transform.position);
+            var distance = Vector3.Distance(position, transform.position);
 
-            transform.position = Vector3.Lerp(transform.position,
-                position, Time.deltaTime * _translateSpeed);
+            while (distance > tolerance)
+            {
+                distance = Vector3.Distance(position, transform.position);
 
-            yield return new WaitForEndOfFrame();
+                transform.position = Vector3.Lerp(transform.position,
+                    position, Time.deltaTime * _translateSpeed);
+
+                yield return new WaitForEndOfFrame();
+            }
+
+            transform.position = position;
+
+            onEndOfTranslation?.Invoke();
         }
 
-        transform.position = position;
-
-        onEndOfTranslation?.Invoke();
+        StartCoroutine(translateAndDo());
     }
 
     private void GoToAndDo(Transform position,

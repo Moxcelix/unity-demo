@@ -3239,7 +3239,7 @@ MonoBehaviour:
   _rotatinonSpeed: 8
   _translateSpeed: 12
   _minFollowDistance: 2
-  _maxFollowDistance: 5
+  _maxFollowDistance: 3.5
 --- !u!195 &1518815135
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -3299,7 +3299,7 @@ AudioSource:
   MinDistance: 1
   MaxDistance: 10
   Pan2D: 0
-  rolloffMode: 0
+  rolloffMode: 1
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
@@ -3311,6 +3311,15 @@ AudioSource:
       value: 1
       inSlope: 0
       outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.3660813
+      value: 0.5623895
+      inSlope: -1.2277342
+      outSlope: -1.2277342
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
@@ -3393,10 +3402,16 @@ MonoBehaviour:
     _audioClips:
     - {fileID: 8300000, guid: 3e3491b58aa88e44198149180c37c8dc, type: 3}
     - {fileID: 8300000, guid: afff5713c57e74a4e91fea058768cdfc, type: 3}
+    - {fileID: 8300000, guid: 7eeed53e92e62f44a88823d593927ac3, type: 3}
   - _name: painting
     _audioClips:
     - {fileID: 8300000, guid: 2bcf1e38ea667b84dbbc0b79a82e397c, type: 3}
     - {fileID: 8300000, guid: 294e1e676a0adfe428890fbe00c41266, type: 3}
+  - _name: wait
+    _audioClips:
+    - {fileID: 8300000, guid: 7b605b6552f932a4fa237d874d6b3a9e, type: 3}
+    - {fileID: 8300000, guid: da989e24c1e295c4db385c24e9f03627, type: 3}
+    - {fileID: 8300000, guid: c2d937b6219184445a9a5c73fab6ad21, type: 3}
 --- !u!1 &1546263453
 GameObject:
   m_ObjectHideFlags: 0
@@ -4525,7 +4540,7 @@ MonoBehaviour:
   _hint: "\u0418\u0437\u0443\u0447\u0438\u0442\u044C"
   _range: 0.5
   _viewPoint: {fileID: 755139433}
-  _rusy: {fileID: 8300000, guid: abd8730138a62ef498c2f3e8643edf41, type: 3}
+  _rusy: {fileID: 8300000, guid: 487fd5777bc8ce1488e5d85e87ae7353, type: 3}
 --- !u!82 &2128618766
 AudioSource:
   m_ObjectHideFlags: 0
