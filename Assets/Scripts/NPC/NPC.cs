@@ -163,6 +163,11 @@ public class NPC : MonoBehaviour, IInteractable, ISitable
 
     public void StayStill()
     {
+        if(!_navMeshAgent.enabled)
+        {
+            return;
+        }
+
         _navMeshAgent.ResetPath();
     }
 
